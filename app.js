@@ -15,12 +15,14 @@ const store = {
 };
 let favs = new Set(store.get("favs",[]));
 let list = store.get("list",{recipes:[],done:{},extras:[],hidden:{}});
-const ui = {q:"",cat:"",tag:"",tm:false,portions:{},mode:{},group:"abteilung"};
+const ui = {q:"",art:"",cat:"",tag:"",tm:false,portions:{},mode:{},group:"abteilung"};
 const saveList = ()=>{ store.set("list",list); badge(); };
 
 /* ---------- Helfer ---------- */
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $ = s => document.querySelector(s);
+const art = r => r.k==="normal" ? "normal" : "gesund";
+const artPill = r => `<span class="pill art-${art(r)}">${art(r)}</span>`;
 const hasTM = r => Array.isArray(r.x) && r.x.length>0;
 const isVeg = r => r.tags.includes("vegetarisch") || r.tags.includes("vegan");
 function hasTag(r,t){ return t==="vegetarisch" ? isVeg(r) : t==="schnell" ? r.m<=20 : r.tags.includes(t); }
@@ -47,10 +49,10 @@ function section(ing){
   if(/^dosen?$/i.test(ing.u)) return "Vorrat";
   if(/öl\b/.test(l) && !/kokosöl/.test(l)) return "Gewürze, Öl & Co.";
   if(/grüne bohnen/.test(l)) return "Obst & Gemüse";
-  if(/kokosmilch|graupen|hirse|toast|meerrettich|kokosdrink|haferdrink|erdnussmus|tomatenmark|gewürzgurke|kichererbsen|linsen|bohnen|datteln|rosinen|kokosraspel|kokosöl|tahin|currypaste|brot|tortilla|nudeln|spaghetti|reis|quinoa|couscous|mehl|haferflocken|schokolade|kakao|nüsse|mandeln|kerne|sesam|samen|backpulver|stärke|oliven\b/.test(l) && !/reisessig/.test(l)) return "Vorrat";
+  if(/kokosmilch|semmel|grieß|zucker|marmelade|apfelmus|röster|makkaroni|fleckerl|brötchen|essiggurke|passierte|lasagne|ketchup|mayonnaise|weißwein\b|graupen|hirse|toast|meerrettich|kokosdrink|haferdrink|erdnussmus|tomatenmark|gewürzgurke|kichererbsen|linsen|bohnen|datteln|rosinen|kokosraspel|kokosöl|tahin|currypaste|brot|tortilla|nudeln|spaghetti|reis|quinoa|couscous|mehl|haferflocken|schokolade|kakao|nüsse|mandeln|kerne|sesam|samen|backpulver|stärke|oliven\b/.test(l) && !/reisessig/.test(l)) return "Vorrat";
   if(/salz|pfeffer|öl\b|essig|zimt|kümmel|curry|paprikapulver|kurkuma|sojasauce|senf|honig|sirup|brühe|muskat|oregano|thymian|rosmarin|chiliflocken|lorbeer|masala|majoran/.test(l)) return "Gewürze, Öl & Co.";
-  if(/hähnchen|pute|rind|hack|lachs|thunfisch|garnelen|kabeljau|fisch/.test(l)) return "Fleisch & Fisch";
-  if(/milch|joghurt|quark|skyr|käse|feta|parmesan|butter|\beier?\b|sahne|schmand|tofu|mozzarella|gnocchi/.test(l)) return "Kühlregal";
+  if(/hähnchen|pute|rind|hack|speck|schinken|schnitzel|kalb|pancetta|lyoner|lachs|thunfisch|garnelen|kabeljau|fisch/.test(l)) return "Fleisch & Fisch";
+  if(/milch|joghurt|quark|skyr|käse|feta|parmesan|butter|\beier?\b|sahne|schmand|tofu|mozzarella|gnocchi|emmentaler|cheddar|rahm|eigelb|hefe|strudelteig|spätzle|knödel/.test(l)) return "Kühlregal";
   if(/wasser/.test(l)) return "";
   return "Obst & Gemüse";
 }
@@ -71,23 +73,38 @@ function badge(){
 const seg = s => (typeof Intl!=="undefined" && Intl.Segmenter)
   ? Array.from(new Intl.Segmenter("de",{granularity:"grapheme"}).segment(s), x=>x.segment)
   : Array.from(s);
+const TABLES = [
+  {bg:"#b9a084",ln:"#8f775c",wood:1},{bg:"#d8d2c6",ln:"#bdb6a8",wood:0},{bg:"#8f7359",ln:"#6f573f",wood:1},
+  {bg:"#c9c5bd",ln:"#aaa59b",wood:0},{bg:"#a88b6c",ln:"#836a4f",wood:1},{bg:"#6f7473",ln:"#565b5a",wood:0}
+];
 function picture(r){
-  const em = seg(r.e), h=(HUE[r.c]+ (r.id*23)%36 - 18 + 360)%360, id="g"+r.id;
-  const side = em.slice(1);
-  const pos = [[62,62,-14],[338,198,12],[336,58,10],[64,200,-8]];
-  let deco="";
-  side.forEach((e,i)=>{
-    const a=pos[i%4], b=pos[(i+2)%4];
-    deco += `<text x="${a[0]}" y="${a[1]}" font-size="46" text-anchor="middle" dominant-baseline="central" transform="rotate(${a[2]} ${a[0]} ${a[1]})">${e}</text>`;
-    deco += `<text x="${b[0]}" y="${b[1]}" font-size="30" opacity=".85" text-anchor="middle" dominant-baseline="central" transform="rotate(${b[2]} ${b[0]} ${b[1]})">${e}</text>`;
-  });
+  const em = seg(r.e), t = TABLES[r.id % TABLES.length], id = "p"+r.id;
+  let lines = "";
+  if(t.wood){
+    [62,128,196].forEach((y,i)=>{ lines += `<line x1="0" y1="${y}" x2="400" y2="${y}" stroke="${t.ln}" stroke-width="1.5" opacity=".55"/>`;
+      lines += `<path d="M${(r.id*53+i*120)%300} ${y+22} q60 -9 130 2" stroke="${t.ln}" stroke-width="1" fill="none" opacity=".3"/>`; });
+  } else {
+    lines = `<rect x="-20" y="150" width="190" height="150" rx="6" fill="${t.ln}" opacity=".35" transform="rotate(-8 80 220)"/>`;
+  }
+  const side = em.slice(1,3).map((e,i)=>{ const x=i?262:138, y=i?170:176;
+    return `<text x="${x}" y="${y}" font-size="38" text-anchor="middle" dominant-baseline="central" transform="rotate(${i?14:-12} ${x} ${y})">${e}</text>`; }).join("");
   return `<svg viewBox="0 0 400 260" role="img" aria-label="${esc(r.t)}" xmlns="http://www.w3.org/2000/svg">
-<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${h} 70% 86%)"/><stop offset="1" stop-color="hsl(${(h+35)%360} 65% 72%)"/></linearGradient></defs>
-<rect width="400" height="260" fill="url(#${id})"/>
-<circle cx="${40+(r.id*37)%320}" cy="-10" r="90" fill="#fff" opacity=".22"/><circle cx="${(r.id*71)%400}" cy="280" r="110" fill="#fff" opacity=".16"/>
-<ellipse cx="200" cy="140" rx="104" ry="100" fill="rgba(0,0,0,.14)"/>
-<circle cx="200" cy="130" r="100" fill="#fff"/><circle cx="200" cy="130" r="76" fill="hsl(${h} 45% 95%)" stroke="hsl(${h} 30% 88%)" stroke-width="2"/>
-<text x="200" y="134" font-size="92" text-anchor="middle" dominant-baseline="central">${em[0]}</text>${deco}</svg>`;
+<defs>
+<radialGradient id="${id}v" cx=".5" cy=".45" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></radialGradient>
+<radialGradient id="${id}t" cx=".42" cy=".36" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".8" stop-color="#f1eee8"/><stop offset="1" stop-color="#d9d4ca"/></radialGradient>
+<radialGradient id="${id}w" cx=".5" cy=".5" r=".5"><stop offset=".75" stop-color="#f6f3ee"/><stop offset="1" stop-color="#e4dfd6"/></radialGradient>
+<filter id="${id}s" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>
+</defs>
+<rect width="400" height="260" fill="${t.bg}"/>${lines}
+<g fill="#cfd2d4" stroke="#8d9296" stroke-width="1"><path d="M56 62 v34 q0 12 9 14 v92 q0 7 6 7 q6 0 6 -7 v-92 q9 -2 9 -14 v-34 h-4 v30 h-5 v-30 h-4 v30 h-4 v-30 h-4 v30 h-5 v-30 z"/>
+<path d="M330 58 q16 14 16 62 v14 h-10 v68 q0 7 -6 7 q-6 0 -6 -7 v-144 z"/></g>
+<ellipse cx="204" cy="142" rx="106" ry="100" fill="#000" opacity=".42" filter="url(#${id}s)"/>
+<circle cx="200" cy="130" r="102" fill="url(#${id}t)"/>
+<circle cx="200" cy="130" r="101" fill="none" stroke="#fff" stroke-width="1.5" opacity=".8"/>
+<circle cx="200" cy="130" r="74" fill="url(#${id}w)" stroke="#d6d0c5" stroke-width="1"/>
+<ellipse cx="200" cy="156" rx="50" ry="14" fill="#000" opacity=".12" filter="url(#${id}s)"/>
+<text x="200" y="124" font-size="84" text-anchor="middle" dominant-baseline="central">${em[0]}</text>${side}
+<rect width="400" height="260" fill="url(#${id}v)"/></svg>`;
 }
 
 /* ---------- Ansichten ---------- */
@@ -95,21 +112,21 @@ function card(r){
   return `<a class="card" href="#/r/${r.id}">${picture(r)}
   <button class="fav ${favs.has(r.id)?"on":""}" data-fav="${r.id}" aria-label="Favorit">${favs.has(r.id)?"♥":"♡"}</button>
   <div class="body"><h3>${esc(r.t)}</h3>
-  <div class="meta"><span>⏱ ${r.m} Min.</span><span>🔥 ${r.n[0]} kcal</span>${hasTM(r)?'<span class="pill tm">Thermomix</span>':""}</div></div></a>`;
+  <div class="meta"><span>⏱ ${r.m} Min.</span><span>🔥 ${r.n[0]} kcal</span></div><div class="meta" style="margin-top:6px">${artPill(r)}${hasTM(r)?'<span class="pill tm">Thermomix</span>':""}</div></div></a>`;
 }
 function filtered(src){
   const q=ui.q.trim().toLowerCase();
-  return src.slice().sort((a,b)=>CATS.indexOf(a.c)-CATS.indexOf(b.c)||a.id-b.id).filter(r=>(!ui.cat||r.c===ui.cat)&&(!ui.tag||hasTag(r,ui.tag))&&(!ui.tm||hasTM(r))&&
+  return src.slice().sort((a,b)=>CATS.indexOf(a.c)-CATS.indexOf(b.c)||a.id-b.id).filter(r=>(!ui.art||art(r)===ui.art)&&(!ui.cat||r.c===ui.cat)&&(!ui.tag||hasTag(r,ui.tag))&&(!ui.tm||hasTM(r))&&
     (!q||r.t.toLowerCase().includes(q)||r.i.some(x=>x.toLowerCase().includes(q))));
 }
 function viewHome(onlyFav){
   const src = onlyFav ? R.filter(r=>favs.has(r.id)) : R;
   const chips = [`<button class="chip ${ui.cat===""?"on":""}" data-cat="">Alle</button>`]
     .concat(CATS.map(c=>`<button class="chip ${ui.cat===c?"on":""}" data-cat="${esc(c)}">${esc(c)}</button>`)).join("");
-  const tags = [`<button class="chip tm ${ui.tm?"on":""}" data-tm="1">Thermomix</button>`]
+  const tags = [`<button class="chip art-gesund ${ui.art==="gesund"?"on":""}" data-art="gesund">gesund</button>`,`<button class="chip art-normal ${ui.art==="normal"?"on":""}" data-art="normal">normal</button>`,`<button class="chip tm ${ui.tm?"on":""}" data-tm="1">Thermomix</button>`]
     .concat(TAGS.map(t=>`<button class="chip ${ui.tag===t?"on":""}" data-tag="${t}">${t}</button>`)).join("");
-  $("#app").innerHTML = `<h1>${onlyFav?"Deine Favoriten":"Gesund kochen, einfach gemacht"}</h1>
-  <p class="sub">${onlyFav?"Rezepte, die du mit ♥ markiert hast.":R.length+" Rezepte mit Nährwerten, Einkaufsliste und Thermomix-Anleitung."}</p>
+  $("#app").innerHTML = `<h1>${onlyFav?"Deine Favoriten":"Kochen, einfach gemacht"}</h1>
+  <p class="sub">${onlyFav?"Rezepte, die du mit ♥ markiert hast.":R.length+" Rezepte – "+R.filter(r=>art(r)==="gesund").length+" gesunde und "+R.filter(r=>art(r)==="normal").length+" normale Klassiker – mit Nährwerten, Einkaufsliste und Thermomix-Anleitung."}</p>
   <input class="search" id="q" type="search" placeholder="Rezept oder Zutat suchen …" value="${esc(ui.q)}">
   <div class="chips">${chips}</div><div class="chips">${tags}</div>
   <div id="res"></div>`;
@@ -121,7 +138,7 @@ function drawGrid(src){
   $("#res").innerHTML = res.length ? `<p class="sub" style="margin:10px 0 0">${res.length} Rezepte</p><div class="grid">${res.map(card).join("")}</div>`
     : `<div class="empty">Keine Rezepte gefunden. Filter anpassen oder Suche leeren.</div>`;
 }
-function fmtStep(s){ return esc(s).replace(/(\d+(?:[–-]\d+)? (?:Sek|Min)\.(?:\/[^\/\s,]+)*\/Stufe \d+(?:[–-]\d+)?)/g,'<b class="set">$1</b>'); }
+function fmtStep(s){ return esc(s).replace(/(\d+(?:[–-]\d+)? (?:Sek|Min)\.(?:\/[^\/\s,]+)*\/(?:Stufe \d+(?:,\d)?(?:[–-]\d+)?|Teigstufe))/g,'<b class="set">$1</b>'); }
 function viewRecipe(id){
   const r = R.find(x=>x.id===id);
   if(!r){ location.hash="#/"; return; }
@@ -142,7 +159,7 @@ function viewRecipe(id){
       <p class="note">Richtwerte, berechnet aus Durchschnittswerten der Zutaten. Anteile in % der Kalorien.</p></div>
   </div><div>
     <h1>${esc(r.t)}</h1>
-    <div class="meta" style="margin:6px 0 4px"><span>⏱ ${r.m} Min.</span><span>${esc(r.c)}</span>${r.tags.map(t=>`<span class="pill">${t}</span>`).join("")}${hasTM(r)?'<span class="pill tm">Thermomix</span>':""}</div>
+    <div class="meta" style="margin:6px 0 4px"><span>⏱ ${r.m} Min.</span><span>${esc(r.c)}</span>${artPill(r)}${r.tags.map(t=>`<span class="pill">${t}</span>`).join("")}${hasTM(r)?'<span class="pill tm">Thermomix</span>':""}</div>
     <div class="box"><div class="row"><h2 style="margin:0">Zutaten</h2>
       <div class="stepper"><button data-p="-1" aria-label="weniger">−</button><b>${p} ${p===1?"Portion":"Portionen"}</b><button data-p="1" aria-label="mehr">+</button></div></div>
       <ul class="ing">${ings}</ul>
@@ -234,8 +251,8 @@ let plan = store.get("plan",null);
 const byId = id => R.find(x=>x.id===id);
 function pool(kind){
   const base = R.filter(r=> kind==="f" ? r.c==="Frühstück" : ["Hauptgericht","Suppe","Salat & Bowl"].includes(r.c));
-  const f = base.filter(r=>(!plan.veg||isVeg(r))&&(!plan.tm||hasTM(r))&&(!plan.fast||r.m<=30));
-  return f.length ? f : base;
+  const f = base.filter(r=>(plan.mix||art(r)==="gesund")&&(!plan.veg||isVeg(r))&&(!plan.tm||hasTM(r))&&(!plan.fast||r.m<=30));
+  return f.length ? f : base.filter(r=>plan.mix||art(r)==="gesund");
 }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function genPlan(){
@@ -258,7 +275,7 @@ function slot(d,kind){
     .map(o=>`<option value="${o.id}" ${o.id===r.id?"selected":""}>${esc(o.t)}</option>`).join("");
   return `<div class="slot"><a class="thumb" href="#/r/${r.id}">${picture(r)}</a>
   <div class="sinfo"><span class="kind">${KIND[kind]}</span><a href="#/r/${r.id}"><b>${esc(r.t)}</b></a>
-  <div class="meta"><span>⏱ ${r.m} Min.</span><span>🔥 ${r.n[0]} kcal</span>${hasTM(r)?'<span class="pill tm">Thermomix</span>':""}</div>
+  <div class="meta"><span>⏱ ${r.m} Min.</span><span>🔥 ${r.n[0]} kcal</span>${artPill(r)}</div>
   <div class="sact"><button class="btn small ghost" data-swap="${d}:${kind}">↻ Tauschen</button>
   <select data-pick="${d}:${kind}" aria-label="${KIND[kind]} ${DAYS[d]} auswählen">${opts}</select></div></div></div>`;
 }
@@ -271,7 +288,7 @@ function viewPlan(){
   <p class="sub">Frühstück und Abendessen für sieben Tage · im Schnitt ${avg} kcal pro Person und Tag aus diesen beiden Mahlzeiten.</p>
   <div class="box" style="margin-top:0"><div class="row">
     <div class="stepper"><button data-pp="-1" aria-label="weniger">−</button><b>für ${plan.p} ${plan.p===1?"Person":"Personen"}</b><button data-pp="1" aria-label="mehr">+</button></div>
-    <div class="chips" style="padding:0"><button class="chip ${plan.veg?"on":""}" data-pf="veg">vegetarisch</button><button class="chip tm ${plan.tm?"on":""}" data-pf="tm">Thermomix</button><button class="chip ${plan.fast?"on":""}" data-pf="fast">max. 30 Min.</button></div></div>
+    <div class="chips" style="padding:0"><button class="chip ${plan.veg?"on":""}" data-pf="veg">vegetarisch</button><button class="chip tm ${plan.tm?"on":""}" data-pf="tm">Thermomix</button><button class="chip ${plan.fast?"on":""}" data-pf="fast">max. 30 Min.</button><button class="chip art-normal ${plan.mix?"on":""}" data-pf="mix">auch normale Küche</button></div></div>
     <div class="planbtn"><button class="btn ghost" data-plan="gen">🎲 Neue Woche würfeln</button><button class="btn" data-plan="add">🛒 Ganze Woche auf die Einkaufsliste</button></div></div>
   <div class="week">${days}</div>`;
 }
@@ -298,12 +315,13 @@ function route(){
 }
 const rid = ()=>{ const m=location.hash.match(/^#\/r\/(\d+)/); return m?+m[1]:0; };
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-fav],[data-cat],[data-tag],[data-tm],[data-p],[data-mode],[data-add],[data-del],[data-rm],[data-lp],[data-group],[data-act],[data-plan],[data-swap],[data-pp],[data-pf]");
+  const t = e.target.closest("[data-fav],[data-art],[data-cat],[data-tag],[data-tm],[data-p],[data-mode],[data-add],[data-del],[data-rm],[data-lp],[data-group],[data-act],[data-plan],[data-swap],[data-pp],[data-pf]");
   if(!t) return;
   const d=t.dataset;
   if(d.fav){ e.preventDefault(); const id=+d.fav; favs.has(id)?favs.delete(id):favs.add(id); store.set("favs",[...favs]);
     t.classList.toggle("on",favs.has(id)); t.textContent=favs.has(id)?"♥":"♡";
     if(location.hash==="#/favoriten") route(); return; }
+  if(d.art){ ui.art = ui.art===d.art?"":d.art; route(); return; }
   if("cat" in d){ ui.cat=d.cat; route(); return; }
   if(d.tag){ ui.tag = ui.tag===d.tag?"":d.tag; route(); return; }
   if(d.tm){ ui.tm=!ui.tm; route(); return; }

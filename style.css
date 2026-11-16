@@ -115,3 +115,8 @@ h2{font-size:19px;margin:28px 0 12px}
 @media print{.planbtn,.sact,.chips,.stepper button{display:none!important}}
 @media(max-width:640px){.top{gap:8px;padding-left:12px;padding-right:10px}.brand{font-size:16px}.tabs{gap:0}.tabs a{padding:7px 8px}}
 @media(max-width:640px){.tabs a{padding:7px 7px;font-size:12.5px}.brand{font-size:15px}.box .chips{flex-wrap:wrap}}
+.pill.art-gesund{background:var(--acc2);color:var(--acc)}
+.pill.art-normal{background:#f3e3cf;color:#8a4b12}
+.chip.art-normal.on{background:#b8651c;border-color:#b8651c}
+@media (prefers-color-scheme:dark){.pill.art-normal{background:#4a3520;color:#f0b877}}
+.card .meta{align-items:center}
