@@ -48,11 +48,13 @@ function section(ing){
   if(/\btk\b|tk-/.test(l)) return "Tiefkühl";
   if(/^dosen?$/i.test(ing.u)) return "Vorrat";
   if(/öl\b/.test(l) && !/kokosöl/.test(l)) return "Gewürze, Öl & Co.";
+  if(/knödel/.test(l) && !/knödelbrot/.test(l)) return "Kühlregal";
   if(/grüne bohnen/.test(l)) return "Obst & Gemüse";
-  if(/kokosmilch|semmel|grieß|zucker|marmelade|apfelmus|röster|makkaroni|fleckerl|brötchen|essiggurke|passierte|lasagne|ketchup|mayonnaise|weißwein\b|graupen|hirse|toast|meerrettich|kokosdrink|haferdrink|erdnussmus|tomatenmark|gewürzgurke|kichererbsen|linsen|bohnen|datteln|rosinen|kokosraspel|kokosöl|tahin|currypaste|brot|tortilla|nudeln|spaghetti|reis|quinoa|couscous|mehl|haferflocken|schokolade|kakao|nüsse|mandeln|kerne|sesam|samen|backpulver|stärke|oliven\b/.test(l) && !/reisessig/.test(l)) return "Vorrat";
-  if(/salz|pfeffer|öl\b|essig|zimt|kümmel|curry|paprikapulver|kurkuma|sojasauce|senf|honig|sirup|brühe|muskat|oregano|thymian|rosmarin|chiliflocken|lorbeer|masala|majoran/.test(l)) return "Gewürze, Öl & Co.";
-  if(/hähnchen|pute|rind|hack|speck|schinken|schnitzel|kalb|pancetta|lyoner|lachs|thunfisch|garnelen|kabeljau|fisch/.test(l)) return "Fleisch & Fisch";
-  if(/milch|joghurt|quark|skyr|käse|feta|parmesan|butter|\beier?\b|sahne|schmand|tofu|mozzarella|gnocchi|emmentaler|cheddar|rahm|eigelb|hefe|strudelteig|spätzle|knödel/.test(l)) return "Kühlregal";
+  if(/kokosmilch|sauerkraut|baked beans|remoulade|bbq|kapern|löffelbiskuit|puddingpulver|vanillesauce|powidl|toastbrot|baguette|croissant|knödelbrot|rollgerste|schälerbsen|hörnli|penne|amaretto|rotwein\b|bier\b|kirschen|kürbiskernöl|cocktail|würfelzucker|knoblauchpulver|nelkenpulver|semmel|grieß|zucker|marmelade|apfelmus|röster|makkaroni|fleckerl|brötchen|essiggurke|passierte|lasagne|ketchup|mayonnaise|weißwein\b|graupen|hirse|toast|meerrettich|kokosdrink|haferdrink|erdnussmus|tomatenmark|gewürzgurke|kichererbsen|linsen|bohnen|datteln|rosinen|kokosraspel|kokosöl|tahin|currypaste|brot|tortilla|nudeln|spaghetti|reis|quinoa|couscous|mehl|haferflocken|schokolade|kakao|nüsse|mandeln|kerne|sesam|samen|backpulver|stärke|oliven\b/.test(l) && !/reisessig/.test(l)) return "Vorrat";
+  if(/salz|pfeffer|öl\b|essig|kümmel|zimt|kümmel|curry|paprikapulver|kurkuma|sojasauce|senf|honig|sirup|brühe|muskat|oregano|thymian|rosmarin|chiliflocken|lorbeer|masala|majoran|suppe\b|fond\b/.test(l)) return "Gewürze, Öl & Co.";
+  if(/kartoffelsalat|leberknödel/.test(l)) return "Kühlregal";
+  if(/hähnchen|pute|rind|hack|leberkäse|wurst|würst|frankfurter|debreziner|rippchen|schweins|rostbraten|tafelspitz|roulade|bündnerfleisch|geschnetzeltes|speck|schinken|schnitzel|kalb|pancetta|lyoner|lachs|thunfisch|garnelen|kabeljau|fisch/.test(l)) return "Fleisch & Fisch";
+  if(/milch|joghurt|quark|skyr|käse|feta|parmesan|butter|\bei(er)?\b|sahne|schmand|tofu|mozzarella|gnocchi|emmentaler|cheddar|gorgonzola|gruyère|mascarpone|crème|topfen|tortellini|schupfnudeln|flammkuchenteig|rahm|eigelb|hefe|strudelteig|spätzle|knödel/.test(l)) return "Kühlregal";
   if(/wasser/.test(l)) return "";
   return "Obst & Gemüse";
 }
