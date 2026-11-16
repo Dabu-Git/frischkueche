@@ -96,3 +96,22 @@ h2{font-size:19px;margin:28px 0 12px}
 }
 @media print{.top,.listhead,.addrow,.x,.rlist,.back{display:none!important}body{background:#fff}}
 [hidden]{display:none!important}
+
+/* Wochenplan */
+.sm{display:none}
+.planbtn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.week{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:16px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.day h2{margin:0}
+.slot{display:flex;gap:12px;padding:12px 0 0;margin-top:12px;border-top:1px dashed var(--line)}
+.thumb{flex:none;width:104px;border-radius:12px;overflow:hidden;align-self:flex-start}
+.thumb svg{display:block;width:100%;height:auto}
+.sinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.kind{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:700}
+.sact{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.sact .btn.small{padding:6px 10px;font-size:13px}
+.sact select{flex:1;min-width:0;max-width:170px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:13px}
+@media(max-width:640px){.lg{display:none}.sm{display:inline}.planbtn{grid-template-columns:1fr}.week{grid-template-columns:minmax(0,1fr)}.thumb{width:84px}}
+@media print{.planbtn,.sact,.chips,.stepper button{display:none!important}}
+@media(max-width:640px){.top{gap:8px;padding-left:12px;padding-right:10px}.brand{font-size:16px}.tabs{gap:0}.tabs a{padding:7px 8px}}
+@media(max-width:640px){.tabs a{padding:7px 7px;font-size:12.5px}.brand{font-size:15px}.box .chips{flex-wrap:wrap}}

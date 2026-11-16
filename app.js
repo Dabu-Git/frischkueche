@@ -5,7 +5,7 @@ R.forEach((r,i)=>{ r.id = i+1; });
 const CATS = ["Frühstück","Suppe","Salat & Bowl","Hauptgericht","Snack & Dip","Süßes"];
 const TAGS = ["vegetarisch","vegan","low carb","proteinreich","schnell"];
 const HUE = {"Frühstück":38,"Suppe":18,"Salat & Bowl":110,"Hauptgericht":200,"Snack & Dip":280,"Süßes":335};
-const UNITS = ["g","kg","ml","l","EL","TL","Stk","Prise","Bund","Dose","Dosen","Zehe","Zehen","Scheibe","Scheiben","Stange","Stangen","Blätter","Pck"];
+const UNITS = ["g","kg","ml","l","EL","TL","Stk","Prise","Bund","Dose","Dosen","Zehe","Zehen","Scheibe","Scheiben","Stange","Stangen","Blätter","Pck","Handvoll"];
 const SECTIONS = ["Obst & Gemüse","Kühlregal","Fleisch & Fisch","Tiefkühl","Vorrat","Gewürze, Öl & Co.","Eigene Artikel"];
 
 /* ---------- Speicher ---------- */
@@ -46,15 +46,18 @@ function section(ing){
   if(/\btk\b|tk-/.test(l)) return "Tiefkühl";
   if(/^dosen?$/i.test(ing.u)) return "Vorrat";
   if(/öl\b/.test(l) && !/kokosöl/.test(l)) return "Gewürze, Öl & Co.";
-  if(/kokosmilch|kokosdrink|haferdrink|erdnussmus|tomatenmark|gewürzgurke|kichererbsen|linsen|bohnen|datteln|rosinen|kokosraspel|kokosöl|tahin|currypaste|brot|tortilla|nudeln|spaghetti|reis|quinoa|couscous|mehl|haferflocken|schokolade|kakao|nüsse|mandeln|kerne|sesam|samen|backpulver|stärke|oliven\b/.test(l) && !/reisessig/.test(l)) return "Vorrat";
-  if(/salz|pfeffer|öl\b|essig|zimt|kümmel|curry|paprikapulver|kurkuma|sojasauce|senf|honig|sirup|brühe|muskat|oregano|thymian|rosmarin|chiliflocken|lorbeer|masala/.test(l)) return "Gewürze, Öl & Co.";
+  if(/grüne bohnen/.test(l)) return "Obst & Gemüse";
+  if(/kokosmilch|graupen|hirse|toast|meerrettich|kokosdrink|haferdrink|erdnussmus|tomatenmark|gewürzgurke|kichererbsen|linsen|bohnen|datteln|rosinen|kokosraspel|kokosöl|tahin|currypaste|brot|tortilla|nudeln|spaghetti|reis|quinoa|couscous|mehl|haferflocken|schokolade|kakao|nüsse|mandeln|kerne|sesam|samen|backpulver|stärke|oliven\b/.test(l) && !/reisessig/.test(l)) return "Vorrat";
+  if(/salz|pfeffer|öl\b|essig|zimt|kümmel|curry|paprikapulver|kurkuma|sojasauce|senf|honig|sirup|brühe|muskat|oregano|thymian|rosmarin|chiliflocken|lorbeer|masala|majoran/.test(l)) return "Gewürze, Öl & Co.";
   if(/hähnchen|pute|rind|hack|lachs|thunfisch|garnelen|kabeljau|fisch/.test(l)) return "Fleisch & Fisch";
-  if(/milch|joghurt|quark|skyr|käse|feta|parmesan|butter|\beier?\b|sahne|schmand|tofu/.test(l)) return "Kühlregal";
+  if(/milch|joghurt|quark|skyr|käse|feta|parmesan|butter|\beier?\b|sahne|schmand|tofu|mozzarella|gnocchi/.test(l)) return "Kühlregal";
   if(/wasser/.test(l)) return "";
   return "Obst & Gemüse";
 }
 const UNORM = {dosen:"dose",zehe:"zehen",scheibe:"scheiben",stange:"stangen"};
-function ikey(g){ const u=g.u.toLowerCase(); return (g.name.replace(/\s*\(.*?\)/g,"").trim()+"|"+(UNORM[u]||u)).toLowerCase(); }
+function norm(g){ const l = (g.q==null && g.name.includes(", ")) ? g.name.split(", ").map(n=>({q:null,u:"",name:n})) : [g];
+  return l.map(x=> x.u==="Prise" ? {q:null,u:"",name:x.name} : x); }
+function ikey(g){ const u=g.u.toLowerCase(); return (g.name.replace(/\s*\(.*?\)/g,"").replace(/ (sehr )?reif\b.*$/,"").trim()+"|"+(UNORM[u]||u)).toLowerCase(); }
 function toast(msg){
   const t=$("#toast"); t.textContent=msg; t.hidden=false;
   clearTimeout(toast._t); toast._t=setTimeout(()=>{t.hidden=true;},2200);
@@ -96,7 +99,7 @@ function card(r){
 }
 function filtered(src){
   const q=ui.q.trim().toLowerCase();
-  return src.filter(r=>(!ui.cat||r.c===ui.cat)&&(!ui.tag||hasTag(r,ui.tag))&&(!ui.tm||hasTM(r))&&
+  return src.slice().sort((a,b)=>CATS.indexOf(a.c)-CATS.indexOf(b.c)||a.id-b.id).filter(r=>(!ui.cat||r.c===ui.cat)&&(!ui.tag||hasTag(r,ui.tag))&&(!ui.tm||hasTM(r))&&
     (!q||r.t.toLowerCase().includes(q)||r.i.some(x=>x.toLowerCase().includes(q))));
 }
 function viewHome(onlyFav){
@@ -157,7 +160,7 @@ function buildItems(){
   const map = new Map();
   list.recipes.forEach(e=>{
     const r = R.find(x=>x.id===e.id); if(!r) return;
-    r.i.map(parseIng).forEach(g=>{
+    r.i.map(parseIng).flatMap(norm).forEach(g=>{
       const sec = section(g); if(!sec) return;
       const key = ikey(g);
       if(list.hidden[key]) return;
@@ -187,7 +190,7 @@ function viewList(){
   } else if(ui.group==="rezept"){
     list.recipes.forEach(e=>{
       const r=R.find(x=>x.id===e.id); if(!r) return;
-      const rows = r.i.map(parseIng).filter(g=>section(g)).map(g=>{
+      const rows = r.i.map(parseIng).flatMap(norm).filter(g=>section(g)).map(g=>{
         const key=ikey(g); if(list.hidden[key]) return "";
         return itemRow({key,name:g.name,u:g.u,q:g.q==null?null:g.q*e.p/r.p,from:[]});
       }).join("");
@@ -224,6 +227,62 @@ function listText(){
   return out;
 }
 
+/* ---------- Wochenplan ---------- */
+const DAYS = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
+const KIND = {f:"Frühstück",a:"Abendessen"};
+let plan = store.get("plan",null);
+const byId = id => R.find(x=>x.id===id);
+function pool(kind){
+  const base = R.filter(r=> kind==="f" ? r.c==="Frühstück" : ["Hauptgericht","Suppe","Salat & Bowl"].includes(r.c));
+  const f = base.filter(r=>(!plan.veg||isVeg(r))&&(!plan.tm||hasTM(r))&&(!plan.fast||r.m<=30));
+  return f.length ? f : base;
+}
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function genPlan(){
+  if(!plan) plan={p:2,veg:false,tm:false,fast:false,days:[]};
+  const f=shuffle(pool("f")), a=shuffle(pool("a"));
+  plan.days = DAYS.map((_,i)=>({f:f[i%f.length].id,a:a[i%a.length].id}));
+  store.set("plan",plan);
+}
+function swapSlot(d,kind){
+  const used = new Set(plan.days.map(x=>x[kind]));
+  let c = pool(kind).filter(r=>!used.has(r.id));
+  if(!c.length) c = pool(kind).filter(r=>r.id!==plan.days[d][kind]);
+  if(!c.length) return;
+  plan.days[d][kind] = c[Math.floor(Math.random()*c.length)].id;
+  store.set("plan",plan);
+}
+function slot(d,kind){
+  const r = byId(plan.days[d][kind]); if(!r) return "";
+  const opts = pool(kind).concat(pool(kind).includes(r)?[]:[r]).sort((x,y)=>x.t.localeCompare(y.t,"de"))
+    .map(o=>`<option value="${o.id}" ${o.id===r.id?"selected":""}>${esc(o.t)}</option>`).join("");
+  return `<div class="slot"><a class="thumb" href="#/r/${r.id}">${picture(r)}</a>
+  <div class="sinfo"><span class="kind">${KIND[kind]}</span><a href="#/r/${r.id}"><b>${esc(r.t)}</b></a>
+  <div class="meta"><span>⏱ ${r.m} Min.</span><span>🔥 ${r.n[0]} kcal</span>${hasTM(r)?'<span class="pill tm">Thermomix</span>':""}</div>
+  <div class="sact"><button class="btn small ghost" data-swap="${d}:${kind}">↻ Tauschen</button>
+  <select data-pick="${d}:${kind}" aria-label="${KIND[kind]} ${DAYS[d]} auswählen">${opts}</select></div></div></div>`;
+}
+function viewPlan(){
+  if(!plan || !plan.days || plan.days.length!==7 || plan.days.some(d=>!byId(d.f)||!byId(d.a))) genPlan();
+  const kc = plan.days.map(d=>byId(d.f).n[0]+byId(d.a).n[0]);
+  const avg = Math.round(kc.reduce((x,y)=>x+y,0)/7);
+  const days = plan.days.map((d,i)=>`<section class="day"><div class="row"><h2>${DAYS[i]}</h2><span class="sub" style="margin:0">${kc[i]} kcal pro Person</span></div>${slot(i,"f")}${slot(i,"a")}</section>`).join("");
+  $("#app").innerHTML = `<h1>Wochenplan</h1>
+  <p class="sub">Frühstück und Abendessen für sieben Tage · im Schnitt ${avg} kcal pro Person und Tag aus diesen beiden Mahlzeiten.</p>
+  <div class="box" style="margin-top:0"><div class="row">
+    <div class="stepper"><button data-pp="-1" aria-label="weniger">−</button><b>für ${plan.p} ${plan.p===1?"Person":"Personen"}</b><button data-pp="1" aria-label="mehr">+</button></div>
+    <div class="chips" style="padding:0"><button class="chip ${plan.veg?"on":""}" data-pf="veg">vegetarisch</button><button class="chip tm ${plan.tm?"on":""}" data-pf="tm">Thermomix</button><button class="chip ${plan.fast?"on":""}" data-pf="fast">max. 30 Min.</button></div></div>
+    <div class="planbtn"><button class="btn ghost" data-plan="gen">🎲 Neue Woche würfeln</button><button class="btn" data-plan="add">🛒 Ganze Woche auf die Einkaufsliste</button></div></div>
+  <div class="week">${days}</div>`;
+}
+function planToList(){
+  const cnt = {};
+  plan.days.forEach(d=>{ cnt[d.f]=(cnt[d.f]||0)+1; cnt[d.a]=(cnt[d.a]||0)+1; });
+  Object.keys(cnt).forEach(k=>{ const id=+k, p=Math.min(48,plan.p*cnt[k]);
+    const ex=list.recipes.find(x=>x.id===id); if(ex) ex.p=p; else list.recipes.push({id,p}); });
+  saveList(); toast("14 Mahlzeiten für "+plan.p+" "+(plan.p===1?"Person":"Personen")+" auf der Einkaufsliste");
+}
+
 /* ---------- Router & Ereignisse ---------- */
 function route(){
   const h = location.hash || "#/";
@@ -231,6 +290,7 @@ function route(){
   let tab="rezepte";
   if(m) viewRecipe(+m[1]);
   else if(h==="#/liste"){ tab="liste"; viewList(); window.scrollTo(0,0); }
+  else if(h==="#/plan"){ tab="plan"; viewPlan(); window.scrollTo(0,0); }
   else if(h==="#/favoriten"){ tab="favoriten"; viewHome(true); }
   else viewHome(false);
   document.querySelectorAll(".tabs a").forEach(a=>a.classList.toggle("on",a.dataset.tab===tab && !m));
@@ -238,7 +298,7 @@ function route(){
 }
 const rid = ()=>{ const m=location.hash.match(/^#\/r\/(\d+)/); return m?+m[1]:0; };
 document.addEventListener("click",e=>{
-  const t = e.target.closest("[data-fav],[data-cat],[data-tag],[data-tm],[data-p],[data-mode],[data-add],[data-del],[data-rm],[data-lp],[data-group],[data-act]");
+  const t = e.target.closest("[data-fav],[data-cat],[data-tag],[data-tm],[data-p],[data-mode],[data-add],[data-del],[data-rm],[data-lp],[data-group],[data-act],[data-plan],[data-swap],[data-pp],[data-pf]");
   if(!t) return;
   const d=t.dataset;
   if(d.fav){ e.preventDefault(); const id=+d.fav; favs.has(id)?favs.delete(id):favs.add(id); store.set("favs",[...favs]);
@@ -254,7 +314,12 @@ document.addEventListener("click",e=>{
     saveList(); viewRecipe._keep=true; viewRecipe(id); toast("„"+r.t+"“ für "+p+" Portionen auf der Einkaufsliste"); return; }
   if(d.del){ e.preventDefault(); const k=d.del; if(k.startsWith("x|")) list.extras=list.extras.filter(n=>"x|"+n.toLowerCase()!==k); else list.hidden[k]=1; delete list.done[k]; saveList(); viewList(); return; }
   if(d.rm){ list.recipes=list.recipes.filter(x=>x.id!==+d.rm); if(!list.recipes.length){ list.hidden={}; } saveList(); viewList(); return; }
-  if(d.lp){ const [id,dl]=d.lp.split(":").map(Number); const ex=list.recipes.find(x=>x.id===id); if(ex){ ex.p=Math.max(1,Math.min(24,ex.p+dl)); saveList(); viewList(); } return; }
+  if(d.lp){ const [id,dl]=d.lp.split(":").map(Number); const ex=list.recipes.find(x=>x.id===id); if(ex){ ex.p=Math.max(1,Math.min(48,ex.p+dl)); saveList(); viewList(); } return; }
+  if(d.plan==="gen"){ genPlan(); viewPlan(); toast("Neuer Wochenplan erstellt"); return; }
+  if(d.plan==="add"){ planToList(); return; }
+  if(d.swap){ const [dd,k]=d.swap.split(":"); swapSlot(+dd,k); viewPlan(); return; }
+  if(d.pp){ plan.p=Math.max(1,Math.min(12,plan.p+ +d.pp)); store.set("plan",plan); viewPlan(); return; }
+  if(d.pf){ plan[d.pf]=!plan[d.pf]; genPlan(); viewPlan(); toast("Wochenplan neu zusammengestellt"); return; }
   if(d.group){ ui.group=d.group; viewList(); return; }
   if(d.act==="extra"){ addExtra(); return; }
   if(d.act==="print"){ window.print(); return; }
@@ -263,6 +328,8 @@ document.addEventListener("click",e=>{
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast("Liste in die Zwischenablage kopiert"),()=>toast("Kopieren nicht möglich – bitte Drucken nutzen")); return; }
 });
 document.addEventListener("change",e=>{
+  const pk=e.target.dataset && e.target.dataset.pick;
+  if(pk){ const [dd,kk]=pk.split(":"); plan.days[+dd][kk]=+e.target.value; store.set("plan",plan); viewPlan(); return; }
   const k=e.target.dataset && e.target.dataset.done; if(!k) return;
   if(e.target.checked) list.done[k]=1; else delete list.done[k];
   saveList(); viewList();
