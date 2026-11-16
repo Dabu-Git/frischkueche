@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f7d4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Frischküche">
+<title>Frischküche – gesunde Rezepte</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a href="#/" class="brand"><span class="logo">🥗</span> Frischküche</a>
+  <nav class="tabs">
+    <a href="#/" data-tab="rezepte">Rezepte</a>
+    <a href="#/favoriten" data-tab="favoriten">Favoriten</a>
+    <a href="#/liste" data-tab="liste">Einkaufsliste <span class="badge" id="badge" hidden></span></a>
+  </nav>
+</header>
+<main id="app"></main>
+<div id="toast" class="toast" hidden></div>
+<script src="rezepte-1.js"></script>
+<script src="rezepte-2.js"></script>
+<script src="rezepte-3.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
